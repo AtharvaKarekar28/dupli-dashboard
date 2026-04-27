@@ -1,4 +1,3 @@
-import sqlite3
 import datetime
 import numpy as np
 import pandas as pd
@@ -7,6 +6,7 @@ import plotly.express as px
 import streamlit as st
 import pickle
 import os
+from supabase import create_client
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 PRESS_SPEED  = 5217
@@ -103,37 +103,35 @@ def lookup_after(qty):
     matches = [ct for q, ct in AFTER_PILOT_OBS if q == qty]
     return float(np.mean(matches)) if matches else None
 
-# ── SQLite ────────────────────────────────────────────────────────────────────
-DB = "production_log.db"
+# ── Supabase ──────────────────────────────────────────────────────────────────
+SUPABASE_URL = st.secrets["SUPABASE_URL"]
+SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 
 @st.cache_resource
-def get_conn():
-    conn = sqlite3.connect(DB, check_same_thread=False)
-    conn.execute("""CREATE TABLE IF NOT EXISTS daily_log (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        log_date TEXT, m1_output INTEGER, m2_output INTEGER, notes TEXT)""")
-    conn.commit()
-    return conn
+def get_supabase():
+    return create_client(SUPABASE_URL, SUPABASE_KEY)
 
 def load_log():
-    df = pd.read_sql(
-        "SELECT *, m1_output+m2_output AS total FROM daily_log ORDER BY log_date ASC",
-        get_conn()
-    )
-    if not df.empty:
-        df["log_date"] = pd.to_datetime(df["log_date"])
+    res = get_supabase().table("daily_log").select("*").order("log_date").execute()
+    if not res.data:
+        return pd.DataFrame(columns=["id","log_date","m1_output","m2_output","notes","total"])
+    df = pd.DataFrame(res.data)
+    df["log_date"]  = pd.to_datetime(df["log_date"])
+    df["m1_output"] = pd.to_numeric(df["m1_output"], errors="coerce").fillna(0).astype(int)
+    df["m2_output"] = pd.to_numeric(df["m2_output"], errors="coerce").fillna(0).astype(int)
+    df["total"]     = df["m1_output"] + df["m2_output"]
     return df
 
 def insert_log(date, m1, m2, notes):
-    get_conn().execute(
-        "INSERT INTO daily_log (log_date,m1_output,m2_output,notes) VALUES (?,?,?,?)",
-        (date, m1, m2, notes)
-    )
-    get_conn().commit()
+    get_supabase().table("daily_log").insert({
+        "log_date":  str(date),
+        "m1_output": int(m1),
+        "m2_output": int(m2),
+        "notes":     notes or "",
+    }).execute()
 
 def delete_log(row_id):
-    get_conn().execute("DELETE FROM daily_log WHERE id=?", (row_id,))
-    get_conn().commit()
+    get_supabase().table("daily_log").delete().eq("id", int(row_id)).execute()
 
 # ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(page_title="Dupli Dashboard", page_icon="✉️", layout="wide")
@@ -236,7 +234,7 @@ if page == PAGES[0]:
         )
 
         # Target pace lines
-        target_colours = {"15M": "#2ca02c", "25M": "#ff7f0e", "35M": "#d62728", "45M": "#9467bd"}
+        target_colours = {"15M": "#2ca02c", "25M": "#ff7f0e", "30M": "#d62728", "39.1M": "#9467bd"}
         for lbl, ann in ANNUAL_TARGETS.items():
             daily_pace = ann / WORKING_DAYS
             target_cum = [daily_pace * d for d in range(1, n_days + 1)]
