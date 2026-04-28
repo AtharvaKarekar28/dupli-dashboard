@@ -6,7 +6,7 @@ import plotly.express as px
 import streamlit as st
 import pickle
 import os
-from supabase import create_client
+import requests
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 PRESS_SPEED  = 5217
@@ -103,19 +103,26 @@ def lookup_after(qty):
     matches = [ct for q, ct in AFTER_PILOT_OBS if q == qty]
     return float(np.mean(matches)) if matches else None
 
-# ── Supabase ──────────────────────────────────────────────────────────────────
+# ── Supabase REST ─────────────────────────────────────────────────────────────
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 
-@st.cache_resource
-def get_supabase():
-    return create_client(SUPABASE_URL, SUPABASE_KEY)
+def _headers():
+    return {
+        "apikey":        SUPABASE_KEY,
+        "Authorization": f"Bearer {SUPABASE_KEY}",
+        "Content-Type":  "application/json",
+        "Prefer":        "return=representation",
+    }
 
 def load_log():
-    res = get_supabase().table("daily_log").select("*").order("log_date").execute()
-    if not res.data:
+    r = requests.get(
+        f"{SUPABASE_URL}/rest/v1/daily_log?select=*&order=log_date.asc",
+        headers=_headers(), timeout=10
+    )
+    if r.status_code != 200 or not r.json():
         return pd.DataFrame(columns=["id","log_date","m1_output","m2_output","notes","total"])
-    df = pd.DataFrame(res.data)
+    df = pd.DataFrame(r.json())
     df["log_date"]  = pd.to_datetime(df["log_date"])
     df["m1_output"] = pd.to_numeric(df["m1_output"], errors="coerce").fillna(0).astype(int)
     df["m2_output"] = pd.to_numeric(df["m2_output"], errors="coerce").fillna(0).astype(int)
@@ -123,15 +130,19 @@ def load_log():
     return df
 
 def insert_log(date, m1, m2, notes):
-    get_supabase().table("daily_log").insert({
-        "log_date":  str(date),
-        "m1_output": int(m1),
-        "m2_output": int(m2),
-        "notes":     notes or "",
-    }).execute()
+    requests.post(
+        f"{SUPABASE_URL}/rest/v1/daily_log",
+        headers=_headers(),
+        json={"log_date": str(date), "m1_output": int(m1),
+              "m2_output": int(m2), "notes": notes or ""},
+        timeout=10
+    )
 
 def delete_log(row_id):
-    get_supabase().table("daily_log").delete().eq("id", int(row_id)).execute()
+    requests.delete(
+        f"{SUPABASE_URL}/rest/v1/daily_log?id=eq.{int(row_id)}",
+        headers=_headers(), timeout=10
+    )
 
 # ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(page_title="Dupli Dashboard", page_icon="✉️", layout="wide")
