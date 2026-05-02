@@ -74,6 +74,13 @@ STAFFING_DATA = {
     },
 }
 
+# White chart style applied to all figures
+CHART_STYLE = dict(
+    paper_bgcolor="#ffffff",
+    plot_bgcolor="#f8f9fa",
+    font_color="#1a1a2e",
+)
+
 FLOOR_SETUP = {500:1.47, 750:2.39, 1000:1.48, 2000:7.00, 2500:2.62,
                2685:1.70, 5000:3.50, 7500:3.00, 10000:7.45}
 
@@ -150,6 +157,14 @@ st.set_page_config(page_title="Dupli Production Dashboard", page_icon="✉️", 
 # Dupli brand colors + bigger fonts + top strip
 st.markdown("""
 <style>
+    /* ── White background ── */
+    .stApp, .main, .block-container {
+        background-color: #ffffff !important;
+        color: #1a1a2e !important;
+    }
+    .stApp [data-testid="stVerticalBlock"] {
+        background-color: #ffffff !important;
+    }
     /* ── Global font size ── */
     html, body, [class*="css"] { font-size: 17px !important; }
     h1 { font-size: 2.4rem !important; }
@@ -288,7 +303,7 @@ if page == PAGES[0]:
             annotation_position="left",
             annotation_font_size=12,
         )
-        fig2.update_layout(
+        fig2.update_layout(**CHART_STYLE, 
             height=440,
             margin=dict(t=30, r=140, l=60, b=60),
             xaxis_title="Date",
@@ -307,12 +322,10 @@ if page == PAGES[0]:
 
         log_sorted = log_df.sort_values("log_date").copy()
         log_sorted["cumulative"] = log_sorted["total"].cumsum()
-        n_days = len(log_sorted)
 
-        date_range = pd.date_range(
-            start=log_sorted["log_date"].min(),
-            periods=n_days
-        )
+        # Full year date range Jan 1 → Dec 31 2026
+        year_start = pd.Timestamp("2026-01-01")
+        year_end   = pd.Timestamp("2026-12-31")
 
         fig3 = go.Figure()
         fig3.add_scatter(
@@ -325,16 +338,14 @@ if page == PAGES[0]:
         )
         target_colours = {"15M": "#2ca02c", "25M": "#ff7f0e", "30M": "#d62728", "39.1M": "#9467bd"}
         for lbl, ann in ANNUAL_TARGETS.items():
-            daily_pace = ann / WORKING_DAYS
-            target_cum = [daily_pace * d for d in range(1, n_days + 1)]
             fig3.add_scatter(
-                x=date_range,
-                y=target_cum,
+                x=[year_start, year_end],
+                y=[0, ann],
                 mode="lines",
                 name=f"{lbl} pace",
                 line=dict(dash="dot", color=target_colours[lbl], width=2),
             )
-        fig3.update_layout(
+        fig3.update_layout(**CHART_STYLE, 
             height=420,
             xaxis_title="Date",
             yaxis_title="Cumulative Envelopes",
@@ -376,7 +387,7 @@ if page == PAGES[0]:
                 annotation_font_size=12,
                 annotation_font_color=col,
             )
-        fig.update_layout(
+        fig.update_layout(**CHART_STYLE, 
             barmode="stack",
             height=500,
             margin=dict(r=150, t=20, b=60),
@@ -401,7 +412,7 @@ if page == PAGES[0]:
     fig4 = px.bar(req, x="Goal", y="Env/Day", text="Env/Day", color="Goal",
                   color_discrete_sequence=["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728"])
     fig4.update_traces(texttemplate="%{text:,.0f}", textposition="outside")
-    fig4.update_layout(height=280, showlegend=False, margin=dict(t=10))
+    fig4.update_layout(**CHART_STYLE, height=280, showlegend=False, margin=dict(t=10))
     st.plotly_chart(fig4, use_container_width=True)
 
 
@@ -453,7 +464,7 @@ elif page == PAGES[1]:
                          name="Before", marker=dict(color="red", size=8))
         fig5.add_scatter(x=cmp["Qty"], y=cmp["After"], mode="markers",
                          name="After", marker=dict(color="green", size=10, symbol="star"))
-        fig5.update_layout(height=300, xaxis_title="Qty",
+        fig5.update_layout(**CHART_STYLE, height=300, xaxis_title="Qty",
                            yaxis_title="Cycle Time (min)", margin=dict(t=10))
         st.plotly_chart(fig5, use_container_width=True)
 
@@ -517,7 +528,7 @@ elif page == PAGES[2]:
             annotation_position="right",
             line_color=goal_colours[lbl],
         )
-    fig6.update_layout(
+    fig6.update_layout(**CHART_STYLE, 
         showlegend=False, height=460,
         margin=dict(r=150, t=10, b=80),
         yaxis_title="Envelopes / Day",
