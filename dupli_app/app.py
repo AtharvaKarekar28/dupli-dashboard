@@ -349,24 +349,40 @@ if page == PAGES[0]:
         log_df["YM"] = log_df["log_date"].dt.to_period("M").astype(str)
         monthly = log_df.groupby("YM")[["m1_output", "m2_output"]].sum().reset_index()
         monthly["total"] = monthly["m1_output"] + monthly["m2_output"]
+        # Format x-axis as "Jan 2026" etc.
+        monthly["YM_label"] = pd.to_datetime(monthly["YM"]).dt.strftime("%b %Y")
 
         fig = go.Figure()
-        fig.add_bar(x=monthly["YM"], y=monthly["m1_output"], name="Memjet 1", marker_color="#4A7BA7")
-        fig.add_bar(x=monthly["YM"], y=monthly["m2_output"], name="Memjet 2", marker_color="#2d5f8a")
+        fig.add_bar(x=monthly["YM_label"], y=monthly["m1_output"],
+                    name="Memjet 1", marker_color="#4A7BA7")
+        fig.add_bar(x=monthly["YM_label"], y=monthly["m2_output"],
+                    name="Memjet 2", marker_color="#7EB6D9")
+
+        target_line_colours = {
+            "15M":   "#2ca02c",
+            "25M":   "#ff7f0e",
+            "30M":   "#d62728",
+            "39.1M": "#9467bd",
+        }
         for lbl, ann in ANNUAL_TARGETS.items():
+            col = target_line_colours[lbl]
             fig.add_hline(
-                y=ann / 12, line_dash="dot",
+                y=ann / 12,
+                line_dash="dot",
+                line_color=col,
+                line_width=2,
                 annotation_text=f"{lbl} ({ann/12/1e3:.0f}K/mo)",
                 annotation_position="right",
                 annotation_font_size=12,
+                annotation_font_color=col,
             )
         fig.update_layout(
             barmode="stack",
             height=500,
-            margin=dict(r=140, t=20, b=60),
+            margin=dict(r=150, t=20, b=60),
             xaxis_title="Month",
-            yaxis_title="",          # removed y-axis label per professor
-            xaxis=dict(tickfont=dict(size=13)),
+            yaxis_title="",
+            xaxis=dict(tickfont=dict(size=13), type="category"),
             yaxis=dict(tickfont=dict(size=13)),
             legend=dict(font=dict(size=13)),
             font=dict(size=14),
