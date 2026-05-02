@@ -250,43 +250,57 @@ if page == PAGES[0]:
         k3.metric("vs 30M goal (120K/day)", f"{latest - 120_000:+,}", delta_color="normal")
         st.divider()
 
-        # ── Daily output trend ──────────────────────────────────────────────
-        st.subheader("Daily Output Trend")
+        # ── Daily Output Bar Chart vs A2 target ─────────────────────────────
+        st.subheader("Daily Output vs A2 Target (101,730/day)")
+
+        A2_TARGET = 101_730
         avg_daily = int(log_df["total"].mean())
+        days_hit  = int((log_df["total"] >= A2_TARGET).sum())
+
+        g1, g2, g3 = st.columns(3)
+        g1.metric("Avg Daily Output", f"{avg_daily:,}")
+        g2.metric("Gap to A2 Target", f"{avg_daily - A2_TARGET:+,}/day", delta_color="normal")
+        g3.metric("Days Hitting Target", f"{days_hit} / {len(log_df)}")
+
+        bar_colors = ["#2ca02c" if v >= A2_TARGET else "#d62728"
+                      for v in log_df["total"]]
+
         fig2 = go.Figure()
-        fig2.add_scatter(x=log_df["log_date"], y=log_df["total"],
-                         mode="lines+markers", name="Daily Output",
-                         line=dict(color="#4A7BA7", width=2),
-                         marker=dict(size=6))
-        # Average line
-        fig2.add_hline(y=avg_daily, line_dash="dash", line_color="#9467bd", line_width=2,
-                       annotation_text=f"Avg: {avg_daily:,}",
-                       annotation_position="left",
-                       annotation_font_size=13)
-        fig2.add_hline(y=60_000,  line_dash="dot", line_color="#2ca02c", line_width=1.5,
-                       annotation_text="15M (60K/day)", annotation_position="right",
-                       annotation_font_size=12)
-        fig2.add_hline(y=100_000, line_dash="dot", line_color="#ff7f0e", line_width=1.5,
-                       annotation_text="25M (100K/day)", annotation_position="right",
-                       annotation_font_size=12)
-        fig2.add_hline(y=120_000, line_dash="dot", line_color="#d62728", line_width=1.5,
-                       annotation_text="30M (120K/day)", annotation_position="right",
-                       annotation_font_size=12)
+        fig2.add_bar(
+            x=log_df["log_date"],
+            y=log_df["total"],
+            name="Daily Output",
+            marker_color=bar_colors,
+            text=log_df["total"].apply(lambda x: f"{x/1000:.0f}K"),
+            textposition="outside",
+            textfont=dict(size=11),
+        )
+        fig2.add_hline(
+            y=A2_TARGET, line_dash="dash", line_color="#4A7BA7", line_width=2.5,
+            annotation_text=f"A2 Target: {A2_TARGET:,}",
+            annotation_position="right",
+            annotation_font_size=13,
+            annotation_font_color="#4A7BA7",
+        )
+        fig2.add_hline(
+            y=avg_daily, line_dash="dot", line_color="#ff7f0e", line_width=2,
+            annotation_text=f"Avg: {avg_daily:,}",
+            annotation_position="left",
+            annotation_font_size=12,
+        )
         fig2.update_layout(
-            height=380,
-            margin=dict(t=10, r=120, l=60),
+            height=440,
+            margin=dict(t=30, r=140, l=60, b=60),
             xaxis_title="Date",
             yaxis_title="Envelopes / Day",
-            xaxis=dict(
-                tickformat="%b %d",
-                tickangle=-30,
-                tickfont=dict(size=12),
-                nticks=20,
-            ),
+            xaxis=dict(tickformat="%b %d", tickangle=-30,
+                       tickfont=dict(size=12), nticks=20),
             yaxis=dict(tickfont=dict(size=12)),
             font=dict(size=14),
+            showlegend=False,
         )
         st.plotly_chart(fig2, use_container_width=True)
+        st.caption("🟢 Hit target  🔴 Below target")
 
         # ── Cumulative production vs targets ─────────────────────────────────
         st.subheader("Cumulative Production vs Annual Targets")
