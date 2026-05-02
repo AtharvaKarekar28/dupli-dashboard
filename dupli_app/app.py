@@ -230,12 +230,13 @@ if page == PAGES[0]:
 
     # ── Required daily output reference — FIRST ──────────────────────────────
     st.subheader("Required Daily Output by Annual Goal")
+    CURRENT_AVG = 50_669
     req = pd.DataFrame({
-        "Goal":    list(ANNUAL_TARGETS.keys()),
-        "Env/Day": [v / WORKING_DAYS for v in ANNUAL_TARGETS.values()]
+        "Goal":    ["Current Avg"] + list(ANNUAL_TARGETS.keys()),
+        "Env/Day": [CURRENT_AVG] + [v / WORKING_DAYS for v in ANNUAL_TARGETS.values()]
     })
     fig4 = px.bar(req, x="Goal", y="Env/Day", text="Env/Day", color="Goal",
-                  color_discrete_sequence=["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728"])
+                  color_discrete_sequence=["#7f7f7f", "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728"])
     fig4.update_traces(texttemplate="%{text:,.0f}", textposition="outside",
                        textfont=dict(size=15))
     fig4.update_layout(height=320, showlegend=False, margin=dict(t=10),
@@ -296,7 +297,7 @@ if page == PAGES[0]:
         )
         fig2.add_hline(
             y=A2_TARGET, line_dash="dash", line_color="#4A7BA7", line_width=2.5,
-            annotation_text=f"A2 Target: {A2_TARGET:,}",
+            annotation_text=f"{A2_TARGET:,}",
             annotation_position="right",
             annotation_font_size=13,
             annotation_font_color="#4A7BA7",
