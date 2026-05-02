@@ -104,8 +104,8 @@ def lookup_after(qty):
     return float(np.mean(matches)) if matches else None
 
 # ── Supabase REST ─────────────────────────────────────────────────────────────
-SUPABASE_URL = "https://pvjkkrvoxecxjiedwexe.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB2amtrcnZveGVjeGppZWR3ZXhlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczMjM2NzYsImV4cCI6MjA5Mjg5OTY3Nn0.ugLv5GWwG5I8eNz2uS_Z00ur0vQPX1s_N5qBvJ92UEQ"
+SUPABASE_URL = st.secrets["SUPABASE_URL"]
+SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 
 def _headers():
     return {
@@ -145,7 +145,70 @@ def delete_log(row_id):
     )
 
 # ── Page config ───────────────────────────────────────────────────────────────
-st.set_page_config(page_title="Dupli Dashboard", page_icon="✉️", layout="wide")
+st.set_page_config(page_title="Dupli Production Dashboard", page_icon="✉️", layout="wide")
+
+# Dupli brand colors + bigger fonts + top strip
+st.markdown("""
+<style>
+    /* ── Global font size ── */
+    html, body, [class*="css"] { font-size: 17px !important; }
+    h1 { font-size: 2.4rem !important; }
+    h2 { font-size: 1.9rem !important; }
+    h3 { font-size: 1.5rem !important; }
+    .stMetric label  { font-size: 1.05rem !important; }
+    .stMetric [data-testid="stMetricValue"] { font-size: 2.1rem !important; }
+    .stDataFrame { font-size: 1rem !important; }
+
+    /* ── Blue top header strip ── */
+    .dupli-header {
+        background-color: #4A7BA7;
+        padding: 14px 28px;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        margin: -1rem -1rem 1.5rem -1rem;
+        border-bottom: 3px solid #2d5f8a;
+    }
+    .dupli-header img {
+        height: 52px;
+        background: white;
+        padding: 6px 12px;
+        border-radius: 6px;
+    }
+    .dupli-header-text {
+        color: white;
+        font-size: 1.5rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+    }
+    .dupli-header-sub {
+        color: #d0e4f5;
+        font-size: 0.95rem;
+        margin-top: 2px;
+    }
+
+    /* ── Sidebar brand color ── */
+    section[data-testid="stSidebar"] {
+        background-color: #1c2e40 !important;
+    }
+    section[data-testid="stSidebar"] * {
+        color: #e8f0f7 !important;
+    }
+    section[data-testid="stSidebar"] .stRadio label {
+        font-size: 1rem !important;
+    }
+</style>
+
+<div class="dupli-header">
+    <img src="https://www.dupli.com/wp-content/uploads/2021/03/dupli-logo.png"
+         onerror="this.style.display='none'"
+         alt="Dupli logo"/>
+    <div>
+        <div class="dupli-header-text">Dupli Production Dashboard</div>
+        <div class="dupli-header-sub">SCM 755 · Lean Six Sigma · Syracuse, NY</div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
 PAGES = ["📊 Daily Dashboard", "⏱ Cycle Time Model", "👥 Staffing Assumptions", "📋 Production Log"]
 
@@ -189,35 +252,42 @@ if page == PAGES[0]:
         k3.metric("vs 30M goal (120K/day)", f"{latest - 120_000:+,}", delta_color="normal")
         st.divider()
 
-        # ── Monthly stacked bar ──────────────────────────────────────────────
-        log_df["YM"] = log_df["log_date"].dt.to_period("M").astype(str)
-        monthly = log_df.groupby("YM")[["m1_output", "m2_output"]].sum().reset_index()
-        monthly["total"] = monthly["m1_output"] + monthly["m2_output"]
-
-        st.subheader("Monthly Output vs Targets")
-        fig = go.Figure()
-        fig.add_bar(x=monthly["YM"], y=monthly["m1_output"], name="Memjet 1", marker_color="#1f77b4")
-        fig.add_bar(x=monthly["YM"], y=monthly["m2_output"], name="Memjet 2", marker_color="#ff7f0e")
-        for lbl, ann in ANNUAL_TARGETS.items():
-            fig.add_hline(
-                y=ann / 12, line_dash="dot",
-                annotation_text=f"{lbl} ({ann/12/1e3:.0f}K/mo)",
-                annotation_position="right"
-            )
-        fig.update_layout(barmode="stack", height=360, margin=dict(r=130),
-                          xaxis_title="Month", yaxis_title="Envelopes")
-        st.plotly_chart(fig, use_container_width=True)
-
-        # ── Daily trend ──────────────────────────────────────────────────────
+        # ── Daily output trend ──────────────────────────────────────────────
         st.subheader("Daily Output Trend")
+        avg_daily = int(log_df["total"].mean())
         fig2 = go.Figure()
         fig2.add_scatter(x=log_df["log_date"], y=log_df["total"],
-                         mode="lines+markers", name="Daily Total", line_color="#1f77b4")
-        fig2.add_hline(y=60_000,  line_dash="dot", annotation_text="15M (60K/day)", line_color="#2ca02c")
-        fig2.add_hline(y=100_000, line_dash="dot", annotation_text="25M (100K/day)", line_color="#ff7f0e")
-        fig2.add_hline(y=120_000, line_dash="dot", annotation_text="30M (120K/day)", line_color="#d62728")
-        fig2.update_layout(height=260, margin=dict(t=10),
-                           xaxis_title="Date", yaxis_title="Envelopes")
+                         mode="lines+markers", name="Daily Output",
+                         line=dict(color="#4A7BA7", width=2),
+                         marker=dict(size=6))
+        # Average line
+        fig2.add_hline(y=avg_daily, line_dash="dash", line_color="#9467bd", line_width=2,
+                       annotation_text=f"Avg: {avg_daily:,}",
+                       annotation_position="left",
+                       annotation_font_size=13)
+        fig2.add_hline(y=60_000,  line_dash="dot", line_color="#2ca02c", line_width=1.5,
+                       annotation_text="15M (60K/day)", annotation_position="right",
+                       annotation_font_size=12)
+        fig2.add_hline(y=100_000, line_dash="dot", line_color="#ff7f0e", line_width=1.5,
+                       annotation_text="25M (100K/day)", annotation_position="right",
+                       annotation_font_size=12)
+        fig2.add_hline(y=120_000, line_dash="dot", line_color="#d62728", line_width=1.5,
+                       annotation_text="30M (120K/day)", annotation_position="right",
+                       annotation_font_size=12)
+        fig2.update_layout(
+            height=380,
+            margin=dict(t=10, r=120, l=60),
+            xaxis_title="Date",
+            yaxis_title="Envelopes / Day",
+            xaxis=dict(
+                tickformat="%b %d",
+                dtick="D7",          # equal 7-day intervals
+                tickangle=-45,
+                tickfont=dict(size=12),
+            ),
+            yaxis=dict(tickfont=dict(size=12)),
+            font=dict(size=14),
+        )
         st.plotly_chart(fig2, use_container_width=True)
 
         # ── Cumulative production vs targets ─────────────────────────────────
@@ -233,18 +303,14 @@ if page == PAGES[0]:
         )
 
         fig3 = go.Figure()
-
-        # Actual cumulative
         fig3.add_scatter(
             x=log_sorted["log_date"],
             y=log_sorted["cumulative"],
             mode="lines+markers",
             name="Actual",
-            line=dict(color="#1f77b4", width=3),
+            line=dict(color="#4A7BA7", width=3),
             marker=dict(size=6),
         )
-
-        # Target pace lines
         target_colours = {"15M": "#2ca02c", "25M": "#ff7f0e", "30M": "#d62728", "39.1M": "#9467bd"}
         for lbl, ann in ANNUAL_TARGETS.items():
             daily_pace = ann / WORKING_DAYS
@@ -256,15 +322,44 @@ if page == PAGES[0]:
                 name=f"{lbl} pace",
                 line=dict(dash="dot", color=target_colours[lbl], width=2),
             )
-
         fig3.update_layout(
-            height=400,
+            height=420,
             xaxis_title="Date",
             yaxis_title="Cumulative Envelopes",
             legend=dict(orientation="h", yanchor="bottom", y=1.02),
             margin=dict(t=10, r=20),
+            font=dict(size=14),
         )
         st.plotly_chart(fig3, use_container_width=True)
+
+        # ── Monthly stacked bar — MOVED TO BOTTOM ────────────────────────────
+        st.subheader("Monthly Output vs Targets")
+        log_df["YM"] = log_df["log_date"].dt.to_period("M").astype(str)
+        monthly = log_df.groupby("YM")[["m1_output", "m2_output"]].sum().reset_index()
+        monthly["total"] = monthly["m1_output"] + monthly["m2_output"]
+
+        fig = go.Figure()
+        fig.add_bar(x=monthly["YM"], y=monthly["m1_output"], name="Memjet 1", marker_color="#4A7BA7")
+        fig.add_bar(x=monthly["YM"], y=monthly["m2_output"], name="Memjet 2", marker_color="#2d5f8a")
+        for lbl, ann in ANNUAL_TARGETS.items():
+            fig.add_hline(
+                y=ann / 12, line_dash="dot",
+                annotation_text=f"{lbl} ({ann/12/1e3:.0f}K/mo)",
+                annotation_position="right",
+                annotation_font_size=12,
+            )
+        fig.update_layout(
+            barmode="stack",
+            height=500,
+            margin=dict(r=140, t=20, b=60),
+            xaxis_title="Month",
+            yaxis_title="",          # removed y-axis label per professor
+            xaxis=dict(tickfont=dict(size=13)),
+            yaxis=dict(tickfont=dict(size=13)),
+            legend=dict(font=dict(size=13)),
+            font=dict(size=14),
+        )
+        st.plotly_chart(fig, use_container_width=True)
 
     else:
         st.info("No data yet — log your first day above.")
