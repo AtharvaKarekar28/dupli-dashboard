@@ -279,9 +279,9 @@ if page == PAGES[0]:
             yaxis_title="Envelopes / Day",
             xaxis=dict(
                 tickformat="%b %d",
-                dtick="D7",          # equal 7-day intervals
-                tickangle=-45,
+                tickangle=-30,
                 tickfont=dict(size=12),
+                nticks=20,
             ),
             yaxis=dict(tickfont=dict(size=12)),
             font=dict(size=14),
