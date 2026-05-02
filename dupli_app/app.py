@@ -228,6 +228,25 @@ model = load_model()
 if page == PAGES[0]:
     st.header("📊 Daily Production Dashboard")
 
+    # ── Required daily output reference — FIRST ──────────────────────────────
+    st.subheader("Required Daily Output by Annual Goal")
+    req = pd.DataFrame({
+        "Goal":    list(ANNUAL_TARGETS.keys()),
+        "Env/Day": [v / WORKING_DAYS for v in ANNUAL_TARGETS.values()]
+    })
+    fig4 = px.bar(req, x="Goal", y="Env/Day", text="Env/Day", color="Goal",
+                  color_discrete_sequence=["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728"])
+    fig4.update_traces(texttemplate="%{text:,.0f}", textposition="outside",
+                       textfont=dict(size=15))
+    fig4.update_layout(height=320, showlegend=False, margin=dict(t=10),
+                       font=dict(size=15),
+                       xaxis=dict(tickfont=dict(size=14)),
+                       yaxis=dict(tickfont=dict(size=14)))
+    st.plotly_chart(fig4, use_container_width=True)
+
+    st.divider()
+
+    # ── Log form — SECOND ────────────────────────────────────────────────────
     with st.expander("➕ Log today's output", expanded=True):
         c1, c2, c3, c4 = st.columns([2, 2, 2, 3])
         log_date = c1.date_input("Date", value=datetime.date.today())
@@ -273,7 +292,7 @@ if page == PAGES[0]:
             marker_color=bar_colors,
             text=log_df["total"].apply(lambda x: f"{x/1000:.0f}K"),
             textposition="outside",
-            textfont=dict(size=11),
+            textfont=dict(size=13),
         )
         fig2.add_hline(
             y=A2_TARGET, line_dash="dash", line_color="#4A7BA7", line_width=2.5,
@@ -293,9 +312,9 @@ if page == PAGES[0]:
             xaxis_title="Date",
             yaxis_title="Envelopes / Day",
             xaxis=dict(tickformat="%b %d", tickangle=-30,
-                       tickfont=dict(size=12), nticks=20),
-            yaxis=dict(tickfont=dict(size=12)),
-            font=dict(size=14),
+                       tickfont=dict(size=14), nticks=20),
+            yaxis=dict(tickfont=dict(size=14)),
+            font=dict(size=15),
             showlegend=False,
         )
         st.plotly_chart(fig2, use_container_width=True)
@@ -332,9 +351,11 @@ if page == PAGES[0]:
         fig3.update_layout(height=420,
             xaxis_title="Date",
             yaxis_title="Cumulative Envelopes",
-            legend=dict(orientation="h", yanchor="bottom", y=1.02),
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, font=dict(size=13)),
             margin=dict(t=10, r=20),
-            font=dict(size=14),
+            font=dict(size=15),
+            xaxis=dict(tickfont=dict(size=13)),
+            yaxis=dict(tickfont=dict(size=13)),
         )
         st.plotly_chart(fig3, use_container_width=True)
 
@@ -384,18 +405,6 @@ if page == PAGES[0]:
 
     else:
         st.info("No data yet — log your first day above.")
-
-    # ── Required daily output reference ──────────────────────────────────────
-    st.subheader("Required Daily Output by Annual Goal (reference)")
-    req = pd.DataFrame({
-        "Goal":    list(ANNUAL_TARGETS.keys()),
-        "Env/Day": [v / WORKING_DAYS for v in ANNUAL_TARGETS.values()]
-    })
-    fig4 = px.bar(req, x="Goal", y="Env/Day", text="Env/Day", color="Goal",
-                  color_discrete_sequence=["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728"])
-    fig4.update_traces(texttemplate="%{text:,.0f}", textposition="outside")
-    fig4.update_layout(height=280, showlegend=False, margin=dict(t=10))
-    st.plotly_chart(fig4, use_container_width=True)
 
 
 # ═══════════════════════════════════════════════════════════════════
