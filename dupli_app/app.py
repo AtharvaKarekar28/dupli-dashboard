@@ -300,12 +300,6 @@ if page == PAGES[0]:
             annotation_font_size=13,
             annotation_font_color="#4A7BA7",
         )
-        fig2.add_hline(
-            y=avg_daily, line_dash="dot", line_color="#ff7f0e", line_width=2,
-            annotation_text=f"Avg: {avg_daily:,}",
-            annotation_position="left",
-            annotation_font_size=12,
-        )
         fig2.update_layout(height=440,
             margin=dict(t=30, r=140, l=60, b=60),
             xaxis_title="Date",
