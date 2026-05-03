@@ -275,10 +275,9 @@ if page == PAGES[0]:
         avg_daily = int(log_df["total"].mean())
         days_hit  = int((log_df["total"] >= A2_TARGET).sum())
 
-        g1, g2, g3 = st.columns(3)
+        g1, g2 = st.columns(2)
         g1.metric("Avg Daily Output", f"{avg_daily:,}")
         g2.metric("Gap to A2 Target", f"{avg_daily - A2_TARGET:+,}/day", delta_color="normal")
-        g3.metric("Days Hitting Target", f"{days_hit} / {len(log_df)}")
 
         bar_colors = ["#2ca02c" if v >= A2_TARGET else "#d62728"
                       for v in log_df["total"]]
