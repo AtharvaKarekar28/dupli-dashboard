@@ -411,13 +411,39 @@ elif page == PAGES[1]:
     st.header("⏱ Cycle Time Model")
     st.caption("Pilot test calculations — based on the pilot order list (16 orders, 50,935 envelopes) and observed pilot timing.")
 
-    # ── Headline metrics ────────────────────────────────────────────────
-    m1, m2, m3, m4, m5 = st.columns(5)
-    m1.metric("Throughput (operator)",   "2,741 → 8,650 env/hr",  "+216%")
-    m2.metric("Throughput (pilot batch)", "4,548 → 8,650 env/hr",  "+90.2%")
-    m3.metric("Daily Output",            "21,479 → 50,935 env",   "+137%")
-    m4.metric("Cycle Time / 500",        "10.9 → 3.5 min",        "−67.9%", delta_color="inverse")
-    m5.metric("Daily Downtime",          "4 → 2 hr/day",          "−50%",   delta_color="inverse")
+    # ── Pilot order data (shared across this page) ──────────────────────
+    pilot_orders = [
+        {"Order #": "14371",    "Qty": 2685,  "Setup (min)": 2.5, "Working (min)": 15,   "Downtime (min)": 2.5, "Total After (min)": 20,   "Before (min)": 82,  "Saved (min)": 62},
+        {"Order #": "4049",     "Qty": 1000,  "Setup (min)": 4.5, "Working (min)": 5,    "Downtime (min)": 1,   "Total After (min)": 10.5, "Before (min)": 14,  "Saved (min)": 3.5},
+        {"Order #": "61593",    "Qty": 750,   "Setup (min)": 2.5, "Working (min)": 2.5,  "Downtime (min)": 0.5, "Total After (min)": 5.5,  "Before (min)": 30,  "Saved (min)": 24.5},
+        {"Order #": "46523",    "Qty": 5000,  "Setup (min)": 4.5, "Working (min)": 20.5, "Downtime (min)": 5.5, "Total After (min)": 30.5, "Before (min)": 32,  "Saved (min)": 1.5},
+        {"Order #": "46523",    "Qty": 10000, "Setup (min)": 2,   "Working (min)": 42.5, "Downtime (min)": 10,  "Total After (min)": 54.5, "Before (min)": 95,  "Saved (min)": 40.5},
+        {"Order #": "3983",     "Qty": 2500,  "Setup (min)": 3.5, "Working (min)": 10.5, "Downtime (min)": 1,   "Total After (min)": 15,   "Before (min)": 20,  "Saved (min)": 5},
+        {"Order #": "3983",     "Qty": 2500,  "Setup (min)": 7.5, "Working (min)": 10.5, "Downtime (min)": 1,   "Total After (min)": 19,   "Before (min)": 37,  "Saved (min)": 18},
+        {"Order #": "61595",    "Qty": 1000,  "Setup (min)": 4.5, "Working (min)": 5,    "Downtime (min)": 1,   "Total After (min)": 10.5, "Before (min)": 31,  "Saved (min)": 20.5},
+        {"Order #": "C103216",  "Qty": 3500,  "Setup (min)": 5,   "Working (min)": 15,   "Downtime (min)": 3.5, "Total After (min)": 23.5, "Before (min)": 25,  "Saved (min)": 1.5},
+        {"Order #": "C103216",  "Qty": 15000, "Setup (min)": 5.5, "Working (min)": 62,   "Downtime (min)": 12,  "Total After (min)": 79.5, "Before (min)": 105, "Saved (min)": 25.5},
+        {"Order #": "448526A",  "Qty": 500,   "Setup (min)": 5,   "Working (min)": 3.5,  "Downtime (min)": 0.5, "Total After (min)": 9,    "Before (min)": 24,  "Saved (min)": 15},
+        {"Order #": "35532",    "Qty": 1000,  "Setup (min)": 5,   "Working (min)": 5,    "Downtime (min)": 1,   "Total After (min)": 11,   "Before (min)": 31,  "Saved (min)": 20},
+        {"Order #": "35532",    "Qty": 2000,  "Setup (min)": 4,   "Working (min)": 9.5,  "Downtime (min)": 2,   "Total After (min)": 15.5, "Before (min)": 49,  "Saved (min)": 33.5},
+        {"Order #": "69BW-200", "Qty": 1000,  "Setup (min)": 6,   "Working (min)": 6.5,  "Downtime (min)": 1,   "Total After (min)": 13.5, "Before (min)": 19,  "Saved (min)": 5.5},
+        {"Order #": "40313",    "Qty": 500,   "Setup (min)": 6.5, "Working (min)": 4,    "Downtime (min)": 0.5, "Total After (min)": 11,   "Before (min)": 31,  "Saved (min)": 20},
+        {"Order #": "1737FSC",  "Qty": 2000,  "Setup (min)": 7,   "Working (min)": 15,   "Downtime (min)": 3,   "Total After (min)": 25,   "Before (min)": 47,  "Saved (min)": 22},
+    ]
+
+    # ── Headline metrics — Row 1 (throughput-related) ────────────────────
+    r1c1, r1c2, r1c3 = st.columns(3)
+    r1c1.metric("Throughput · operator",     "2,741 → 8,650 env/hr",  "+216%")
+    r1c2.metric("Throughput · pilot batch",  "4,548 → 8,650 env/hr",  "+90.2%")
+    r1c3.metric("Daily Output",              "21,479 → 50,935 env",   "+137%")
+
+    # ── Headline metrics — Row 2 (time-related) ──────────────────────────
+    r2c1, r2c2, r2c3 = st.columns(3)
+    r2c1.metric("Cycle Time / 500", "10.9 → 3.5 min", "−67.9%", delta_color="inverse")
+    r2c2.metric("Daily Downtime",   "4 → 2 hr/day",   "−50%",   delta_color="inverse")
+    r2c3.metric("Changeover Time",  "5 → 2 min",      "−60%",   delta_color="inverse")
+
+    st.divider()
 
     # ── Key Metrics Comparison ──────────────────────────────────────────
     st.subheader("Key Metrics — Before vs After Pilot")
@@ -501,26 +527,62 @@ elif page == PAGES[1]:
 
     st.divider()
 
+    # ── NEW: Per-Order Before vs After Lookup ───────────────────────────
+    st.subheader("🔍 Compare a Specific Order")
+    st.caption("Pick an order from the pilot list to see its before/after pilot times.")
+
+    order_labels = [f"{o['Order #']}  ·  {o['Qty']:,} envelopes" for o in pilot_orders]
+    label_to_order = dict(zip(order_labels, pilot_orders))
+    selected_label = st.selectbox("Order", order_labels, label_visibility="collapsed")
+    selected = label_to_order[selected_label]
+
+    before = selected["Before (min)"]
+    after  = selected["Total After (min)"]
+    saved  = selected["Saved (min)"]
+    pct    = (saved / before * 100) if before > 0 else 0
+
+    # Per-order metrics
+    o1, o2, o3, o4 = st.columns(4)
+    o1.metric("Quantity",     f"{selected['Qty']:,} env")
+    o2.metric("Before Pilot", f"{before:g} min")
+    o3.metric("After Pilot",  f"{after:g} min",  delta=f"−{saved:g} min", delta_color="inverse")
+    o4.metric("Time Saved",   f"{saved:g} min",  f"−{pct:.1f}%",          delta_color="inverse")
+
+    # Bar chart + after-pilot breakdown
+    bc1, bc2 = st.columns([3, 2])
+    with bc1:
+        fig_order = go.Figure(go.Bar(
+            x=["Before Pilot", "After Pilot"],
+            y=[before, after],
+            text=[f"{before:g} min", f"{after:g} min"],
+            textposition="outside",
+            marker_color=["#E74C3C", "#27AE60"],
+            textfont=dict(size=14),
+        ))
+        fig_order.update_layout(
+            height=340, margin=dict(t=40, b=20),
+            yaxis_title="Minutes",
+            title=f"Order {selected['Order #']}  ·  {selected['Qty']:,} envelopes",
+            yaxis=dict(range=[0, max(before, after) * 1.25], tickfont=dict(size=13)),
+            xaxis=dict(tickfont=dict(size=14)),
+            font=dict(size=14),
+        )
+        st.plotly_chart(fig_order, use_container_width=True)
+
+    with bc2:
+        st.markdown("**After-pilot time breakdown:**")
+        breakdown = pd.DataFrame([
+            {"Component": "Setup",    "Time (min)": selected["Setup (min)"]},
+            {"Component": "Working",  "Time (min)": selected["Working (min)"]},
+            {"Component": "Downtime", "Time (min)": selected["Downtime (min)"]},
+            {"Component": "Total",    "Time (min)": after},
+        ])
+        st.dataframe(breakdown, use_container_width=True, hide_index=True)
+
+    st.divider()
+
     # ── Pilot Order List (Figure 3) ─────────────────────────────────────
     with st.expander("📋 Pilot Order List (Figure 3) — 16 orders, 50,935 envelopes"):
-        pilot_orders = [
-            {"Order #": "14371",    "Qty": 2685,  "Setup (min)": 2.5, "Working (min)": 15,   "Downtime (min)": 2.5, "Total After (min)": 20,   "Before (min)": 82,  "Saved (min)": 62},
-            {"Order #": "4049",     "Qty": 1000,  "Setup (min)": 4.5, "Working (min)": 5,    "Downtime (min)": 1,   "Total After (min)": 10.5, "Before (min)": 14,  "Saved (min)": 3.5},
-            {"Order #": "61593",    "Qty": 750,   "Setup (min)": 2.5, "Working (min)": 2.5,  "Downtime (min)": 0.5, "Total After (min)": 5.5,  "Before (min)": 30,  "Saved (min)": 24.5},
-            {"Order #": "46523",    "Qty": 5000,  "Setup (min)": 4.5, "Working (min)": 20.5, "Downtime (min)": 5.5, "Total After (min)": 30.5, "Before (min)": 32,  "Saved (min)": 1.5},
-            {"Order #": "46523",    "Qty": 10000, "Setup (min)": 2,   "Working (min)": 42.5, "Downtime (min)": 10,  "Total After (min)": 54.5, "Before (min)": 95,  "Saved (min)": 40.5},
-            {"Order #": "3983",     "Qty": 2500,  "Setup (min)": 3.5, "Working (min)": 10.5, "Downtime (min)": 1,   "Total After (min)": 15,   "Before (min)": 20,  "Saved (min)": 5},
-            {"Order #": "3983",     "Qty": 2500,  "Setup (min)": 7.5, "Working (min)": 10.5, "Downtime (min)": 1,   "Total After (min)": 19,   "Before (min)": 37,  "Saved (min)": 18},
-            {"Order #": "61595",    "Qty": 1000,  "Setup (min)": 4.5, "Working (min)": 5,    "Downtime (min)": 1,   "Total After (min)": 10.5, "Before (min)": 31,  "Saved (min)": 20.5},
-            {"Order #": "C103216",  "Qty": 3500,  "Setup (min)": 5,   "Working (min)": 15,   "Downtime (min)": 3.5, "Total After (min)": 23.5, "Before (min)": 25,  "Saved (min)": 1.5},
-            {"Order #": "C103216",  "Qty": 15000, "Setup (min)": 5.5, "Working (min)": 62,   "Downtime (min)": 12,  "Total After (min)": 79.5, "Before (min)": 105, "Saved (min)": 25.5},
-            {"Order #": "448526A",  "Qty": 500,   "Setup (min)": 5,   "Working (min)": 3.5,  "Downtime (min)": 0.5, "Total After (min)": 9,    "Before (min)": 24,  "Saved (min)": 15},
-            {"Order #": "35532",    "Qty": 1000,  "Setup (min)": 5,   "Working (min)": 5,    "Downtime (min)": 1,   "Total After (min)": 11,   "Before (min)": 31,  "Saved (min)": 20},
-            {"Order #": "35532",    "Qty": 2000,  "Setup (min)": 4,   "Working (min)": 9.5,  "Downtime (min)": 2,   "Total After (min)": 15.5, "Before (min)": 49,  "Saved (min)": 33.5},
-            {"Order #": "69BW-200", "Qty": 1000,  "Setup (min)": 6,   "Working (min)": 6.5,  "Downtime (min)": 1,   "Total After (min)": 13.5, "Before (min)": 19,  "Saved (min)": 5.5},
-            {"Order #": "40313",    "Qty": 500,   "Setup (min)": 6.5, "Working (min)": 4,    "Downtime (min)": 0.5, "Total After (min)": 11,   "Before (min)": 31,  "Saved (min)": 20},
-            {"Order #": "1737FSC",  "Qty": 2000,  "Setup (min)": 7,   "Working (min)": 15,   "Downtime (min)": 3,   "Total After (min)": 25,   "Before (min)": 47,  "Saved (min)": 22},
-        ]
         df_pilot = pd.DataFrame(pilot_orders)
         total_row = pd.DataFrame([{
             "Order #":           "TOTAL",
