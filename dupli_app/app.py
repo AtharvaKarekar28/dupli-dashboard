@@ -148,19 +148,24 @@ def delete_log(row_id):
 st.set_page_config(page_title="Dupli Production Dashboard", page_icon="✉️", layout="wide")
 
 # Dupli brand colors + bigger fonts + top strip
-st.markdown("""
+# NOTE: keep the inline base64 logo from your existing file — paste it back into
+# the two placeholders below (HEADER_LOGO_BASE64 and SIDEBAR_LOGO_BASE64).
+HEADER_LOGO_BASE64 = "PASTE_HEADER_LOGO_BASE64_HERE"
+SIDEBAR_LOGO_BASE64 = "PASTE_SIDEBAR_LOGO_BASE64_HERE"
+
+st.markdown(f"""
 <style>
     /* ── Global font size ── */
-    html, body, [class*="css"] { font-size: 17px !important; }
-    h1 { font-size: 2.4rem !important; }
-    h2 { font-size: 1.9rem !important; }
-    h3 { font-size: 1.5rem !important; }
-    .stMetric label  { font-size: 1.05rem !important; }
-    .stMetric [data-testid="stMetricValue"] { font-size: 2.1rem !important; }
-    .stDataFrame { font-size: 1rem !important; }
+    html, body, [class*="css"] {{ font-size: 17px !important; }}
+    h1 {{ font-size: 2.4rem !important; }}
+    h2 {{ font-size: 1.9rem !important; }}
+    h3 {{ font-size: 1.5rem !important; }}
+    .stMetric label  {{ font-size: 1.05rem !important; }}
+    .stMetric [data-testid="stMetricValue"] {{ font-size: 2.1rem !important; }}
+    .stDataFrame {{ font-size: 1rem !important; }}
 
     /* ── Blue top header strip ── */
-    .dupli-header {
+    .dupli-header {{
         background-color: #4A7BA7;
         padding: 14px 28px;
         display: flex;
@@ -168,39 +173,39 @@ st.markdown("""
         gap: 18px;
         margin: -1rem -1rem 1.5rem -1rem;
         border-bottom: 3px solid #2d5f8a;
-    }
-    .dupli-header img {
+    }}
+    .dupli-header img {{
         height: 52px;
         background: white;
         padding: 6px 12px;
         border-radius: 6px;
-    }
-    .dupli-header-text {
+    }}
+    .dupli-header-text {{
         color: white;
         font-size: 1.5rem;
         font-weight: 700;
         letter-spacing: 0.5px;
-    }
-    .dupli-header-sub {
+    }}
+    .dupli-header-sub {{
         color: #d0e4f5;
         font-size: 0.95rem;
         margin-top: 2px;
-    }
+    }}
 
     /* ── Sidebar brand color ── */
-    section[data-testid="stSidebar"] {
+    section[data-testid="stSidebar"] {{
         background-color: #4A7BA7 !important;
-    }
-    section[data-testid="stSidebar"] * {
+    }}
+    section[data-testid="stSidebar"] * {{
         color: #ffffff !important;
-    }
-    section[data-testid="stSidebar"] .stRadio label {
+    }}
+    section[data-testid="stSidebar"] .stRadio label {{
         font-size: 1rem !important;
-    }
+    }}
 </style>
 
 <div class="dupli-header">
-    <img src="data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCACHAV8DASIAAhEBAxEB/8QAHQABAAIDAQEBAQAAAAAAAAAAAAcIBAUGCQMCAf/EAFgQAAECBQICAwcLDgsIAwAAAAECAwAEBQYREiEHMQgTQRQiN1FhsrMVIzI1NnF0gYORoRYXGEJyc3WUlbTB0tPjJCUzU1VWV2KSsdFSVGNkgoWTwoSi8P/EABoBAQACAwEAAAAAAAAAAAAAAAABAgMEBQb/xAAuEQACAgEEAQIEBQUBAAAAAAAAAQIDEQQSITFBBRMiMjNRQnGBkbFDYaHw8dH/2gAMAwEAAhEDEQA/ALlwhCAEIQgBCOeuy8aDbbK+7p9jukA6JcKJWVacgEJBKc7bkY3iHq7xhuWdKkU5qVpjZxgpQHV+XdQxv9zGzTpLbuUuDWu1ddXDfJPszMy8sjXMzDTKeepxYSPpjXOXNbbatLlwUlB8SpxsH/OKqT87Mz8wZibd6xw5yrSB257PfjHjfj6WvMjRl6m/ES2rNx288cM16luHxJm2z+mNk2tDiAttaVpIyCk5BinEWe4T+4iR+9N+iRGvq9EqIqSeTZ0usd0nFrB1cIQjnm8IQhACEIQAhCEAIQhACEIQAhCEAIQhACEIQAhCEAIQhACEIQAhGgrV62dRJ5UjWbqolOmk+yZmp9tpY2B9ipQPIg/GIwvrmcOf6+Wx+VWf1oA6yEc3TL+sap1BmnU28bfnJx86WZdiotLccOM4SkKydvFHSQAhH4feal2lOvuoabTzUtWAPjjlhxN4ckZF+2uR+FWP1oA6yEcn9czhz/Xy2Pyqz+tGxoF32pcE2uUoNy0eqzDaC4tqTnW3lpSCAVEJJIGVJ38ogDdwhCAEIQgBEZcUOJctSWXKZQZtt6olKkrdQkLSwoKwRnONWytsHsja8WbzTbNJMvKLWKm9oLWEjCElRyokgj7UjHliuDzrjzy3nlqcccUVLWo5KidySfHHT0OjVnxz6ObrdXs+CHZkVWpT9VnXJyozbsy+4rUpbis7+TxDYbDxRiwhHbSSWEcZtvliEIQAiz3Cf3ESP3pv0SIrDFnuE/uIkfvTfokRzfU/po6Ppv1GdXHKX5dK7ZnqQt3qxIzDikzSiglSEgoAI3HLUSefKOriKekX7UU/5Tzmo5elgp2qMumdPUzcKnJeCT6dOS1RkGJ6TdS7LvoC21p7QY+8RD0frndmUPW7NuOKEuyHJbJyAnWdQ5eNae3siXorfS6bHFlqLVbBSQhCEYTKIQhACEIQAhCEAIQhACEIQAhCEAIQhACEIQAhCEAUL6aC1p40VDStQ/k+R/5diIR613+cX/iMTb00vDRUPkvzZiIPgXRJXRkWtXHq0tSlH+GHmf8Ahrj0bjzi6MXh6tL4YfRrj0dgVZpL69ys5/0eemPLgOOAYDigPfj1TuGQXU6O/ItrS2pzThSuQwoH9EVCHQ+uvG920UH707/pAJlaetd/nF/4jFiegQtSuK1W1KJ/iN47n/jy8Zv2H11f1uov/hd/0iT+jhwJrXC68p2uVKuU+famKeuUS3LoWFAqcaXk6hy9bI+MQJbJ9hCECoj8TLyJeXcfdOENoK1HxADJj9xwnG+rqpVmFCFALnHFS5GSO9U2vPL4oyVQdk1FeSlk1XByfggy+Lgdue43qs411OtKEJb1EhISkD/PJ+ONJCJd4G2SmZcTclTacT1DqTKNrQnS53mde+/2ySCMbj5vSWWQ09efCPO11zvsx5ZzNlcNa1crAmy4iQlFJSpLjzS8rBJ3SMAHYZ59o8cd/IcFKK1gzlXn31DP8mlDYPxEKiUwABgDAEI4lmvum+HhHZr0NUFyss4A8JLWKdOud5c8tZ8yNTUeClHd1GRrE9LqJJ9dQhwD4gEx2FxXzbFDUtqbq0uZlIPrLZKzkHBB0g6Tnxxz8rxdtpx/Q+vqW8+zw4rt8QRFoT1bW6OSs4aVPEsEV3vw+rNro691SZyV73LzLa8Jzkd9tgbjHPtHjibuE/uIkfvTfokRuqJXKRW2OupVQl5tAJB6tW4xzyOY5j5xGTT5KWkJfqJRlDLWchCEhIGwHIe8Irfqp2w2TXKLUaaNc98HwzIiKekX7UU/5TzmolaIp6RftRT/AJTzmopovrxL6z6EiJLMqblJuaQnGzsmYb6wZxlOtJI+iLJcQrj+pOz564BKd2dy9X6z1mjVqcSj2WDjGrPLsiqo2ORFgONT5meB1WeVzV1P5y2I3fVI8xkafpkvmiQoOmQvG/D1P5X/AHMPsyFf2ej8r/uYqdCOQdfCPS/gnfiuJFgy10qpYpheeda7nD/W40K051aU8/ejtohXoVeAWnfDJn0hiaoFRHD8b7+Vw2sJ66E0oVQtvtM9zl/qc6zjOrSrl70dxEI9NrwETnw+W86AI5+zIV/Z6Pyv+5gemQvG3D1P5X/cxU6EC2Eeq9vz/qrQafVOq6nuyVamOr1Z0a0hWM9uMwuKoKpNv1GqJZ69UnKuzAa1adZQgq05wcZxjODGFYPuEt/8GS3okx9b0ANnVsEZHqe/6NUCpWEdMheN+Hqc+Sr/ALmB6ZC8bcPU/lf9zFToQLYR6YcKL/lb34byd5zUu1R2nm3XHm3JkKQwltxaCSshO2GyckDHxRDnEDpaUakz7sha9uOVVSNH8Kfm0IaORk6QjVqxkDmN8+LerFTvatT9hUiy1uBqlUt1x1tLa1guKWpSsrGrSca1gbDZR8Zjf2VwU4lXW0iZp9qz7cmvUBMTAQyDp2OA4pOd9tvL4jAYO3rXSr4iVBfrNPockgDADKZgHn2kOjf4ow5HpP8AEiVfDpbpL+Md66JhQ9NH9rHRi4kyckp+Spyp5xKNRaS4wg+8PXTnt+aIlum2bgtaoqp9xUedpkylRTpmGikKIxnSeShuNwSNx44DgsrbPTDm0uJRctmsOIOrU7T5kpI8WELBz5e+H6DZTh5fFvX5RBVbfnEPIAQXWS62p1gqSFBLiUKVpO+ME8wfFHl/G9sK6anZt2U64qU4oPyUwl7q+sUlLoHNCtJBKSCQR4iYDB6kQjkOEF7yl/2FS7gZXLJmn5dKpuXZWT1DuSlScHcDUlWM9g5nnHXwKlCuml4aKh8l+bMRB8Th00vDRUPkvzZiIPgXRJHRi8PVpfDD6NcejsecXRi8PVpfDD6NcejsCrEVSqHTAXKVCZlDw/SvqXlt6vVbGrSSM46nblFrY8qbi90FR+FO+eYBFovsyFf2ej8r/uYl/gDxfVxUlZt82+KT3O4tGBN9dq0hs59gnH8p9Hljzvi3nQG9qqt9/e82XgS0WphCECoiIOks6RJURnsU48r5ggf+0S/EO9JdJLNBX2BUwPnDf+kbeh+vH/fBq636Ev8AfJDcuy4+8lppJUtXIRb2lSqZGlykkj2Muyhob52SkD9EVRthSE1yXUv2I1Z2/umLbxueqt5ijU9MSxJiOK4wXQ7blslUg+hFQedQhvKArCSSScHbkkiO1iGOkah3rpNeT1WlAxn7bLvZ70aOkgp3JM3dXNwqbRDpJJJPMwhCPSnnDaWtXJ63aw3VKepAeQlSe/RqBBGDtFrabOM1Cny89Lq1NTDSXUHyKAI+gxT6LR8MA8LIpnXHP8Ga0b/a9UjEcr1SCwpeTqemzeXHwdNEU9Iv2op/ynnNRK0RT0i/ain/ACnnNRoaL68Te1n0JEGJBUoJSCSTgARYDjZLqleB9XYUMFPU/TMtmIVs6nLqlzU+USkKSuZa6zJx3pWkH/OJ26Qnggrn/wAf84bjd9Ul8sTT9Mj80jzXhCEcg7BfvoVeAWnfDJn0hiaohToUqCuA0gAd0zsyD/5M/pia4FGIhHps+Aic+Hy3nRN0QF06KizL8HG5ArPXTVUYSE6TyCXFc/8AogEUXhCEC56lWD7hLf8AwZLeiTH1vP3H1r8Hv+jVHysH3CW/+DJb0SY+t5+4+tfg9/0aoFDywhCEC5PXQ44ayF6XhOVeuyz66fRkMvsFDpb1TBdyjl7JOG3M7+KL1xWroGPSq7SrLLScPt9R1x04zlyYKd+3aLKwKsRwXHTh5TeItjTNNnGXXJyUbdmKdodKMTHVKSjV405IyMR3sIEHk44hbayhxCkKHNKhgiPzG+v8yqrtnTJICJf1vQMYx62nP05jQwLlmugJXjLXhcFBeeSluakG30JKRupt3SAD8sdv9IuXFBuhj1v14fWjj+Bd/wCVPdDGYvzAqyhXTS8NFQ+S/NmIg+Jw6aXhoqHyX5sxEHwLIkjoxeHq0vhh9GuPR2POLoxeHq0vhh9GuPR2BViPKm4vdBUfhTvnmPVaPKm4vdBUfhTvnmARgRbzoDe1VW+/vebLxUOLedAb2qq3397zZeBL6LUwhCBURG3SDpjk7asrMshJVKzBUrJwdGhROP8ACIkmMWryLVSpc1IPY0TDK2idIONSSM7+/GWmz27FL7GO6v3IOP3KgpUpJ1JJBHaItra1VZrNBlJ9lSj1jKCvUMEKKQSPpirFw0maolWeps4MPNaSe9IzlII579sdnwfvr6m5v1KnW9chOTCSp0uY6g406tzjHsc8sAdsdrXUu+tSh4ONorvZscZeSw8cvxMthV1W0uny6mW5pLqHGnHAcAg4O48hVHRycyxOSrU1LOodZdSFIWhQUFA+IjYx9Y4cJyrkpLtHblFTi0+mU9qMnMU+ddk5tvq32VlC06gcEEg7jbmDHwi3FaodJrLWipU+VmFBOlK3GUrUgeQqBxGkleHlrMP9b6nMu750OMNFPPxaY68fVIY+JcnIl6bLPwvggaxbOqV2T3Uyim2WEhRcfWQQnAG2M5O5T88Wgk5dqUk2ZVlIS0y2ltCRyCQMAfRGHPzdKt6lKfe7nkpRsgYTpbTkns5DMYFhXJ9VNHdqQle5kB8toRr1Ep0pUCfL30aWpvnqFvxiKN3TUwoe3OZM6CIp6RftRT/lPOaiVo4Pitb8zck3RKc0lYYW6sTDyUk9WjLZJ5EZwDjPbGPSSUbotmTVRcqmkct0erdcQuZuCaaaU060G5Ync+zOo47MFAiROI9DcuSzJ+ishBXM9XjUcDvXEq/9Y2lBprNHosnS5c5blWUtBRABVgczjtPP44zYrqLndY5FtPV7VaieTjiFNuKbWMKSSCPERH5ieOlbwfm7MuN25qSJmdo9TcfmphSZYhMk4p7OhRSNKUeuICckEkHblEDxgNksb0ReMlJstD1pXM+/LUx9x6ZamQ2XEtuFLeElKUleCEL3GRkjbmRdZpxDrSHWzlC0hSTjmDyjycjYyFerlPaLUhWajKNnmhiaWgcscgYENHpnft6W7Y1G9VrknVyssSpKNDK3FLUElWkBIO+AeeB5YoJ0geJ73E681VSXROSlKbZaalpN5wHSUgkqITtkqWvfc4PPsEfT07OTzxfnZt+adJyVvOFaj8ZiTJTg1VmuDNU4k1l16RblXEtS9PXLqQ84S+03rJUNk9+vkDukeXAYwRXCEIEnqVYPuEt/8GS3okx9bz9x9a/B7/o1R8eH5CrDt4jkaXLEf+JMfa8/cfWvwe/6NUCh5YQhCBclnox8UpXhheE3M1RmZepdSZQxMBkj1shxJDpGMq0pLmw3OqPQCjVORrFNaqNOf6+Vez1bmhSc4UUnZQB5gx5lpsmtu2Si7ZVnuuQLhQ6lhC1rYA6zv14ThKfWlbk/px8LWvG6LXcCqFXqnII3Jal5txpCiRvkIUM8h8wgQ1k9R4h/pGcY6Pw+oEzSmu6ZiuzzLzEuhlJT3OotZDpURpOCtvYZO/kin9a41cRqpJKlHLkqMuhSNCjLz0wlRHbn1w//AImI/m5iYm5lyam33Zh91RU466sqWtR5kk7kwGD5x/IR2/B/hxW+I90y1Kp7T7MiXkonJ/uda2pZOFKJUQMBRCSEgkZOBntgSTf0BramPV+u3Q+y33OJFEswokFSit0kkDswWe3yYi38c7w2tOSsiyaXbMioOokWA2p7qwguryVKWQPGpSj28+Z5x0UCjKFdNLw0VD5L82YiD4nDppeGiofJfmzEQfAuiSOjF4erS+GH0a49HY84ujF4erS+GH0a49HYFWI8qbi90FR+FO+eY9Vo8qbi90FR+FO+eYBGBFvOgN7VVb7+95svFQ4t50Bvaqrff3vNl4EvotTCEIFRCEIAjzi/YibilFVWnNurq7SUNpQFDS4gKORgkAHvs58mIr4+06w8tl9tbTrailaFjBSQcEEdhi40cXxGsGQuphc0jU1VG2ShhwukIJzkBQwdsk8hnf3sdLR672/gn1/BztXovc+OHZBdpXnXbYKhS32g2vGttxoKSrBJ58+08j2x3tP43TgwmfoUus75U0+pA8mxCo4mv2BdlGWruikPPtAkB6VHWoIAznbcD3wI5haVIUUrSUqHMEYMdOVNF/xYTOcrr6fhy0TgrjVIhJIpGTjl3Sr9nGoqPG2oq1Jp9ElGdzhTzynPoATESwisdBQvwlnrr35NxdFy1e5JsTVWmEOrSkJSEtpSABnxDyn543Nn8Ra5a9KXTpCXkHWlul3LzaioHSlPYobYSI5ymUerVNQTTqbNzZOf5FlShtz3AiQLP4RVqbm2nrgbTJSYUCttL461ScZ2wFAb4G5B5xa50QhtnjH2K1K+c90M5+5nW9xKv6vzvclKo9OmFgjWUMLwgE4ySVgD4zE1MJcSyhLrgccCQFKCdIJ7SB2e9GDb1Fp9BpjVOprSm2Gk4GpZUTuSSSfGST8cbGODqLITfwRwjt0VzgvjlliEIRgM5j1KSlqjTpmnzrfWy0y0pl5GojUhQIIyNxseyIIvLop2FWp1+dpNRq1FeecU4pCXA+0CfEF99z39l2nyYn+EAU7qvRCqjDxEhdhm29sE09CPf5vx+6L0QZ998eql2rlWgrcIp6FFQ8hDxx8xi4MIE5ZC3Dro18PrRnZepvKqVZqLBQtDszMFtDbiVBQUlDentA2UVDaJMv8Atan3paU7bVUdmGpSc6vrFy6glY0OJWMEgjmkdnKN7CBBXcdETh3j29uj8YY/ZQPRE4d49vbo/GGP2UWIhAnJhUGnM0ehyFIl1uOMyMs3LNqcxqUlCQkE4AGcDsEY15+4+tfg9/0ao20am8/cfWvwe/6NUCDywhCEC5djoLJC7BqKFDKVBsEfKzEbi9ei5w6r0wubp7tVokwoJBDEx1rZxtkpc1HJGPthyHlzqOgn7hJ/5P0sxFjIFX2VArPRAnmHP4svBU2gjOFU5KSN+WS8M7RjSHRErLzwTN3R3M3tlXcCF9viD8XIhAZZXK2uiNZMk4lyuV6r1YjPrbeiXbOeWQNStvIqJ6tmg0m2qOzSKLK9yyTKUpbb6xS8AJCRuok8kgc+yNnCBAhCEARDxQ6P1ocQroeuGsVSty8y9p1IlXWko2QhA2U2TyQO3tMcr9iJw7/py6Pxhj9lFiIQJyQlYnRpsmzrvptz02r3A9N090utNvvMltRwR3wDYPb2ERNsIQIEV8nOiZw+mpx+acrlzBbzinFAPsYBJzgetRYOEAV3+xE4d/05dH4wx+yiSOEHCa3+GMvMs0Oeqc0mYWpau7HEKIKggHGlCf5sfOYkCEBkQhCAEIQgBCEIA/LiEOIKHEJWkjBSoZBjQz1k2lOqKn7fkMnGS20Gz/8AXEdBCLRnKPyvBWUIy7WTi3eF1lLWFJo4SPEJh39eMmV4c2XL4KKDLqI/nFrX5yjHVwjI9Ra/xP8AcoqKl+FfsYVNpNKpoxT6bJynP+RZSjnz5CM2EIxNt8syJJdCEIRBIhCEAIR85p9qVlXZl5YQ00grWokABIGScmPzIzTE7JtTcs4lxl1OpCkkEEe+NonDxkjKzg+0IRop277alHww9Wqfr5ECab705xv320TGLl0iJSUe2b2EYUpVqZNyS52Vn5V+XQjWtxt5KkpG+SSDgcj8xj90uoyNUle6qfNMzLOop1tOJWnI5jIJEQ4teCVJMyoRiVOpSFMaDs/NsSyDyU64lAO4HaR4x88H6nIMU9NQdnGESq0haXlOJCCCM5Cs45bw2sbkZcYNwyjtQoFRkGCkOzMq6ygqOAFKQQM+TJj6vT8k1TfVFyZZRKdWHOuLgCNJ5HVnGN+car6srW/p+l/jjX60SoSfSIc4rtlOB0S+Jv8ASFs/jjv7KH2JfE3+kLZ/HHf2UXOlbmoE2HO5avIv9WnWsNzKFaRkDJwdhkgfHGdTahJVKW7okJpmZazp1tOBYzgHGQT2EQcJLtEqxPpkXdGfhxXuHFszVNr70g687o0mUdUtOy3VHdSU9ix9MS1GPUJ6Up8uZidmWZdoc1urCByJ5nyAxiPV+jMU1qovVKUalHVaG3VvoCFHfYEnB9ifmMFFvpByS7Zs4Rofqytb+sFL/HGv1o2dLqchU2eup84xNNj7ZpxKxzI5gnxGDhJLLRCnF8JmXCMapz8rTZQzU46lpkEAqUoJAzy3JAjJiMeSc+BCEY8rOy0y++ww8hxbB0uBKgdJyRg45cjDBOTIhGPPz0nIMdfPTbEq1/tvOBA5Z5n3o1Ujd9tzr/Us1mQKyCQDNN5PvYVEqEmspFXOKeGzewhGmm7qt2UmXZaZrVPZeaUUrQuabSpJ8RBVkREYuXSJclHtm5hGJTapTak31lPn5WbSM5LLyV4x7xPjEfOrVml0nq/VKoSsp1mdHXPJRqxjONRGeYidrzjHI3LGcmfCND9WVrf1gpf441+tG0pdRkanK91U+aZmWdRTracC05HMZBIg4Sjy0QpxfCZlQhCKlhCEIAQhCAEIQgBCEIAQhCAEIQgBCEDtzgDgeNFYWxQ0W9JpDk9Vx1LSATqPfoGAB48kb4jA4G1SbbYnLUqTXUTVLSCltSiVkKWoqyOW2pI28YjnEOXHe9+P16jIa0Ud0syzmlJQpOpZSd1JycH/ACj43G3dFqXXK3fVw0VTb6GphSW0hJSnQcbKVjKUfQY6qpj7fs5We/75/wCHLdr9z3knjr+2P+m+4x1WpVWuy1jUtJ1PITMLW2ohZICzoIyARgJPzR0tC4a2zTKeZZyURPLUBqemWW1KBxg6e92HbjeOO4qGeod6yd80xoTUqllLRc5thZDiCCR5MfHHf0y+7TnpJMyK9T2TpBW268EKScZIwrBPzRis9yNUFX15x9zLDZK2Xud+M/Y/tQo1PollViWp8uhpBknydKEpz3qz2AcsmON4H3BQqZZKpeo1iQlHu63FdW8+lCsEJwcE5xHYVGv0at2tXhSaixOFiSeDvVnOnKFgfPg7xHfCKxbcuO0jUKpKuuTHdK29SXlJ70BOBgHHbCtL2Ze7ntfmTNv3Y+1jpmdxtr1EqdCYap1WkZtwE5Sy+lZHftnkD5D8xjYXX4E6Z8Aa/N1RznFmyLetyjszNKlXWnVE5KnlK+2QO0/3jHR3X4E6Z8Aa/N1RkWzZXs6z5MT377N/eDOuPwFf9oY81EaHh2zw/VZVONYeoCZ4pX1wmCz1mdasZ1DPLHON9cfgL/7Qx5qI5Cxba4cz1pSE3Wp6UaqDiVdcldRDagQtQGU6ttgIivHtSy383gtPPuxwl8vkku1pC0Qt2at5FKdJBaWuVS0dspJBKR9yce9HDcL3V2pelStObBbbnJguSZc70qSnrBqAG24QPFHY2NKWbSi5T7aqMm8tZLqmm5wOq+1BOMk42EaLjPTJlgyF4yAUZmjkLKSMpUOsTjI8W6uUYq2nOVbziX3/AMGSaagrF3H7f5NZxfmFXJclKtGRBcLU0FznVnJbSrQAojlsHDH06QrLUvaUiyy2lttM6jCUgADvHTyEZPBeQnJ2dqV6VFBS/VE4bwnSnGtWrAz/AHEx8ekb7mJP4ajzHYywajdCpfh/nyYppypnY/P8eDZSzHC8yUsXXrYS4GU6t5fOcb525x11uSlHl6chdDTK9yOjKFywSEKGTy0jB3JiPJa0eFC5RhTtRkUuKbSV/wAagb43+2jv7T9Q2KQ1T6BOS8zKSqdKeqfDunJJ3IJ7c/NGvfjbw3+psUZzyl+hoeOHg0qX3TPpURpOCd6oqMiKHVJlpE41oblApatTyAjy53GjPPt5Ru+OHg0qf3TPpURxDVtLmrDpt1UzWmqUdpt1ttKdQeCUtq3BPYNR25xmpjCWn2y8vv8AYw3SnHUbo+F/6SXf10ytq0UzjxbU+5qTLtKJ79YSSOQJxnAPLnzjguBFQLFtXLVZpRWpt0zDqlKOVEIKjk84x7KpFUvaqv3Jdks6mXlmwqUShHVJW4khKj49uq3HjPZH64FSfqnZdyyCiR3US0SP7zZH6Yt7cK6ZR88Z/cr7k7Loy8c4MW26GviPeFVq9XmJpFOl3gqWbQrUhQ1YAGrOBhvfA38nKO7r/DW2qpIGWalW5BeQQ7LMNpVseXsY47hzW2bLuKq23cKxIyqXNMq86gjVhZIyQCMELBznAiRaledrSEqZh+v09SQQMNPhxRyexKcn6IrqJXKxKGceMFqI1OtuffnJw/BirzshU6haNUdcccYmCiXU6tRUAlKgUgHICR1YwAe084wrQpNOq/F262alJsTTaFOKSl1tKwD1gGRqB3jI4RSM5XLpqN4TrDksjryqXTpwlYWHCQCdyAFp3xvmNLIWuxdXFW55R+celQy644FNJBJOsDBz78Znt9yfOOFn8zEt2yHGeXj8j6XJIS1q8V5P6nV5cVLalyzeBpJQsEd5jsCVY8uY2/SADRqtsh/QGetc6zVjGnU1nOezEaCxpOVsnikJKvhLZEuoszTq9CU6kA5wCQeS08+flEb3pBoZcqVtNzBAZU46HCTgBJU1nfs2i39etd8d/fhlf6Fj656+3KNxTmOGJpsqX37aDvUI1gmXzq0jOdufjjtLdlaTK0tCaKmWEmpRUky4SEE5wSNO3MY+KI3kLS4VOU+WcfqUkl5TKC4PVQDCikZ21bbxIlqpozVFal6DNMTEiypSUqaeDoBJ1EagTvlX0xo6jGOG/wBTcoznlL9DawhCNQ2xCEIAQhCAEIQgBCEIAQhCAEIQgBHynGBMy6mFOOthWO+bXpUMHOxhCANZattUm2ZN2VpLK20Or6xwrWVKUrAG5Pvf5x9bkoVMuGn9w1WX65kK1p3wUqwRkHx4JhCLb5bt2eSuyO3bjg/LNv0tNDRRZlju6TQSQibPWknUVbk+UxzL/CazHHdaZOZaGfYImVY+nJhCLxusj8smVlTXLtG7olnW/RqdOSNOkiy3OtdVMHrVKU4nBHMnb2R5eOMu1qBTrbpnqdTEuJYLhcw4vUdRxnf4hCEVlZOWcvslVxjjC6Pzc9u0y45VMtU23FtpORoWUnmD2fciE9blMnLeaoTzbhkmWg0hIWQoJCCkb+8YQgrJJJJ9Bwi2212fSboVPmrb+p91DncPUJY0hZ1aEgAb/EI5dPCezwABLzmB/wA0qEItG6yHyvBEqa5fMjZ2zYlvW7VPVKmNTCZjqy3lbxUNJxnY+9G+q0hLVSmTNOnEa5eYbLbgBwcHxeIwhFZWSk9zfJMa4xW1Lg/lGpspSKXL02RQUS8ujQ2CcnHlPjjBuq2qVc0m3KVVtxbTbgcSEOFJ1AEdn3RhCIU5KW5Pklwi47WuDnvrUWf/ALvOfjSo6C1bYpVtMvNUpDqEvY19Y4V8iSOf3RhCLyvsmsSk2ikaa4vMYmVcVHka9SHqXUULXLPFJWEqKT3qgobjygQo1GkKVSk0yVaJlgnTpcOrI0hODnyCEIpvljbngvtWd2OTKYlJaXle5Zdhtlnvu8bSEgaiSdh4ySfjjVWla9JteXfYpLbqEPrC19Y4VbgY7YQhvlhrPY2xynjo/lyWjbtw4VVaY084DkOpJQvOMbqSQTsBscjYRo5fhVZzbgW7KTUyByQ7MrKfoIhCLxvsisKTKSprk8uKOxkZOUkZZMtJSzUuykABDaAkDAxyHkAjWUm2KVS6/P1yUQ6Jyez1xU4Snc5OB2biEIopyWeey7jF446PjdFnUG5HkP1OUUZhACUvNLKF6RnbI7O+Mfy5bOotxMSTVWTMP9xoKWl9cQo505Kj2nvRvCEWVs1jD6KuqDzldmm+tRZ/+7zn40qOlta36bbdNNPpaHEMFwukLWVHUQAdz7whCJndZNYlJsRprg8xWDawhCMRkP/Z" alt="Dupli logo"/>
+    <img src="data:image/png;base64,{HEADER_LOGO_BASE64}" alt="Dupli logo"/>
     <div>
         <div class="dupli-header-text">Production Dashboard</div>
     </div>
@@ -210,7 +215,7 @@ st.markdown("""
 PAGES = ["📊 Daily Dashboard", "⏱ Cycle Time Model", "👥 Staffing Assumptions", "📋 Production Log"]
 
 with st.sidebar:
-    st.markdown('<img src="data:image/png;base64,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" style="width:100%;max-width:180px;margin-bottom:8px;background:white;padding:8px;border-radius:6px;">', unsafe_allow_html=True)
+    st.markdown(f'<img src="data:image/png;base64,{SIDEBAR_LOGO_BASE64}" style="width:100%;max-width:180px;margin-bottom:8px;background:white;padding:8px;border-radius:6px;">', unsafe_allow_html=True)
     st.divider()
     page = st.radio("Navigate", PAGES, label_visibility="collapsed")
     st.divider()
@@ -400,56 +405,137 @@ if page == PAGES[0]:
 
 
 # ═══════════════════════════════════════════════════════════════════
-# PAGE 2 – CYCLE TIME MODEL
+# PAGE 2 – CYCLE TIME MODEL  (per report — Figure 3, Appendix A1, A4)
 # ═══════════════════════════════════════════════════════════════════
 elif page == PAGES[1]:
     st.header("⏱ Cycle Time Model")
-    if not model:
-        st.warning("gb_before.pkl not found — run `python train.py` first. Using linear fallback.")
+    st.caption("Pilot test calculations — based on the pilot order list (16 orders, 50,935 envelopes) and observed pilot timing.")
 
+    # ── Headline metrics ────────────────────────────────────────────────
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("Throughput",       "2,741 → 8,650 env/hr",  "+216%")
+    m2.metric("Daily Output",     "21,479 → 50,935 env",   "+137%")
+    m3.metric("Cycle Time / 500", "10.9 → 3.5 min",        "−67.9%", delta_color="inverse")
+    m4.metric("Daily Downtime",   "4 → 2 hr/day",          "−50%",   delta_color="inverse")
+
+    st.divider()
+
+    # ── Key Metrics Comparison ──────────────────────────────────────────
+    st.subheader("Key Metrics — Before vs After Pilot")
+    key_metrics = [
+        {"Key Metric": "Throughput",          "Before Pilot": "2,741 env/hr",   "After Pilot": "8,650 env/hr",   "Improvement": "+5,909 env/hr  ·  +216%"},
+        {"Key Metric": "Daily output",         "Before Pilot": "21,479 env/day", "After Pilot": "50,935 env/day", "Improvement": "+29,456 env/day  ·  +137%"},
+        {"Key Metric": "Daily machine DT",     "Before Pilot": "4 hr/day",        "After Pilot": "2 hr/day",        "Improvement": "−2 hr/day  ·  −50%"},
+        {"Key Metric": "Cycle time / 500 env", "Before Pilot": "10.9 min",        "After Pilot": "3.5 min",         "Improvement": "−7.4 min  ·  −67.9%"},
+        {"Key Metric": "Changeover time",      "Before Pilot": "5 min",           "After Pilot": "2 min",           "Improvement": "−3 min  ·  −60%"},
+    ]
+    st.dataframe(pd.DataFrame(key_metrics), use_container_width=True, hide_index=True)
+
+    st.divider()
+
+    # ── Visual summary ──────────────────────────────────────────────────
     col1, col2 = st.columns(2)
-
     with col1:
-        st.subheader("Job Estimator")
-        qty   = st.number_input("Quantity", min_value=100, max_value=50_000, step=250, value=2500)
-        setup = st.number_input("Setup (min) — auto-filled from floor obs",
-                                min_value=0.0, max_value=60.0,
-                                step=0.1, value=float(get_setup(int(qty))), format="%.2f")
-        before = predict_before(qty, setup, model)
-        after  = lookup_after(int(qty))
-
-        st.divider()
-        m1, m2, m3 = st.columns(3)
-        m1.metric("Before (model)", f"{before:.1f} min")
-        m2.metric("After (pilot)", f"{after:.2f} min" if after else "No exact obs")
-        if after:
-            m3.metric("Reduction", f"{(before - after) / before * 100:.1f}%", delta_color="inverse")
-
-        st.divider()
-        st.metric("Overall pilot improvement",
-                  f"{BEFORE_MEAN:.2f} → {AFTER_MEAN:.2f} min",
-                  delta=f"-{(BEFORE_MEAN - AFTER_MEAN) / BEFORE_MEAN * 100:.1f}%",
-                  delta_color="inverse")
+        st.markdown("**Throughput (env/hour)**")
+        fig_t = go.Figure(go.Bar(
+            x=["Before Pilot", "After Pilot"],
+            y=[2741, 8650],
+            text=["2,741", "8,650"],
+            textposition="outside",
+            marker_color=["#E74C3C", "#27AE60"],
+            textfont=dict(size=14),
+        ))
+        fig_t.update_layout(height=340, margin=dict(t=20, b=20),
+                            yaxis_title="Envelopes / hour",
+                            yaxis=dict(range=[0, 10000], tickfont=dict(size=13)),
+                            xaxis=dict(tickfont=dict(size=14)),
+                            font=dict(size=14))
+        st.plotly_chart(fig_t, use_container_width=True)
 
     with col2:
-        st.subheader("All 9 Pilot Observations")
-        rows = []
-        for q, act in AFTER_PILOT_OBS:
-            s = get_setup(q)
-            b = predict_before(q, s, model)
-            rows.append({"Qty": q, "Setup": s, "Before": round(b, 2),
-                         "After": act, "Δ%": round((b - act) / b * 100, 1)})
-        cmp = pd.DataFrame(rows)
-        st.dataframe(cmp, use_container_width=True, hide_index=True)
+        st.markdown("**Cycle Time (min / 500 envelopes)**")
+        fig_c = go.Figure(go.Bar(
+            x=["Before Pilot", "After Pilot"],
+            y=[10.9, 3.5],
+            text=["10.9 min", "3.5 min"],
+            textposition="outside",
+            marker_color=["#E74C3C", "#27AE60"],
+            textfont=dict(size=14),
+        ))
+        fig_c.update_layout(height=340, margin=dict(t=20, b=20),
+                            yaxis_title="Minutes per 500 envelopes",
+                            yaxis=dict(range=[0, 14], tickfont=dict(size=13)),
+                            xaxis=dict(tickfont=dict(size=14)),
+                            font=dict(size=14))
+        st.plotly_chart(fig_c, use_container_width=True)
 
-        fig5 = go.Figure()
-        fig5.add_scatter(x=cmp["Qty"], y=cmp["Before"], mode="markers+lines",
-                         name="Before", marker=dict(color="red", size=8))
-        fig5.add_scatter(x=cmp["Qty"], y=cmp["After"], mode="markers",
-                         name="After", marker=dict(color="green", size=10, symbol="star"))
-        fig5.update_layout(height=300, xaxis_title="Qty",
-                           yaxis_title="Cycle Time (min)", margin=dict(t=10))
-        st.plotly_chart(fig5, use_container_width=True)
+    st.divider()
+
+    # ── Throughput Calculation (Appendix A1) ───────────────────────────
+    st.subheader("Throughput Calculation")
+    st.caption("Pilot test result — 16 orders, 50,935 envelopes total")
+    throughput_rows = [
+        {"Item": "Total pilot quantity",      "Formula": "Pilot order list",          "Result": "50,935 envelopes"},
+        {"Item": "Before pilot time",         "Formula": "Dupli est. completion time", "Result": "672 min"},
+        {"Item": "After pilot time",          "Formula": "Observed pilot total time",  "Result": "353.5 min"},
+        {"Item": "Before pilot throughput",   "Formula": "50,935 ÷ (672 ÷ 60)",        "Result": "4,548 env/hour"},
+        {"Item": "After pilot throughput",    "Formula": "50,935 ÷ (353.5 ÷ 60)",      "Result": "8,650 env/hour"},
+        {"Item": "Improvement",               "Formula": "8,650 − 4,548",              "Result": "+4,102 env/hour"},
+        {"Item": "% Improvement",             "Formula": "4,102 ÷ 4,548",              "Result": "90.2%"},
+    ]
+    st.dataframe(pd.DataFrame(throughput_rows), use_container_width=True, hide_index=True)
+    st.caption("Table A1. Before/after throughput calculations — pilot batch comparison.")
+
+    st.divider()
+
+    # ── Cycle Time per 500 envelopes (Appendix A4) ─────────────────────
+    st.subheader("Cycle Time per 500 Envelopes")
+    st.markdown("Cycle time and throughput are inversely related: **Cycle Time = 1 ÷ throughput**")
+    cycle_rows = [
+        {"Item": "Throughput → Cycle Time",                    "Formula": "Cycle Time = 1 ÷ throughput",  "Result": "Cycle Time (min/unit)"},
+        {"Item": "Michael before pilot — 2,741 env/hr",        "Formula": "(1 ÷ 2,741) × 500 × 60",       "Result": "10.9 min / 500 envelopes"},
+        {"Item": "Michael + Mark after pilot — 8,650 env/hr",  "Formula": "(1 ÷ 8,650) × 500 × 60",       "Result": "3.5 min / 500 envelopes"},
+        {"Item": "Improvement",                                "Formula": "10.9 − 3.5",                   "Result": "7.4 min / 500 env  ·  67.9%"},
+    ]
+    st.dataframe(pd.DataFrame(cycle_rows), use_container_width=True, hide_index=True)
+    st.caption("Table A4. Before/after cycle time per 500 envelopes — operator-level (Michael alone vs. Michael + Mark).")
+
+    st.divider()
+
+    # ── Pilot Order List (Figure 3) ─────────────────────────────────────
+    with st.expander("📋 Pilot Order List (Figure 3) — 16 orders, 50,935 envelopes"):
+        pilot_orders = [
+            {"Order #": "14371",    "Qty": 2685,  "Setup (min)": 2.5, "Working (min)": 15,   "Downtime (min)": 2.5, "Total After (min)": 20,   "Before (min)": 82,  "Saved (min)": 62},
+            {"Order #": "4049",     "Qty": 1000,  "Setup (min)": 4.5, "Working (min)": 5,    "Downtime (min)": 1,   "Total After (min)": 10.5, "Before (min)": 14,  "Saved (min)": 3.5},
+            {"Order #": "61593",    "Qty": 750,   "Setup (min)": 2.5, "Working (min)": 2.5,  "Downtime (min)": 0.5, "Total After (min)": 5.5,  "Before (min)": 30,  "Saved (min)": 24.5},
+            {"Order #": "46523",    "Qty": 5000,  "Setup (min)": 4.5, "Working (min)": 20.5, "Downtime (min)": 5.5, "Total After (min)": 30.5, "Before (min)": 32,  "Saved (min)": 1.5},
+            {"Order #": "46523",    "Qty": 10000, "Setup (min)": 2,   "Working (min)": 42.5, "Downtime (min)": 10,  "Total After (min)": 54.5, "Before (min)": 95,  "Saved (min)": 40.5},
+            {"Order #": "3983",     "Qty": 2500,  "Setup (min)": 3.5, "Working (min)": 10.5, "Downtime (min)": 1,   "Total After (min)": 15,   "Before (min)": 20,  "Saved (min)": 5},
+            {"Order #": "3983",     "Qty": 2500,  "Setup (min)": 7.5, "Working (min)": 10.5, "Downtime (min)": 1,   "Total After (min)": 19,   "Before (min)": 37,  "Saved (min)": 18},
+            {"Order #": "61595",    "Qty": 1000,  "Setup (min)": 4.5, "Working (min)": 5,    "Downtime (min)": 1,   "Total After (min)": 10.5, "Before (min)": 31,  "Saved (min)": 20.5},
+            {"Order #": "C103216",  "Qty": 3500,  "Setup (min)": 5,   "Working (min)": 15,   "Downtime (min)": 3.5, "Total After (min)": 23.5, "Before (min)": 25,  "Saved (min)": 1.5},
+            {"Order #": "C103216",  "Qty": 15000, "Setup (min)": 5.5, "Working (min)": 62,   "Downtime (min)": 12,  "Total After (min)": 79.5, "Before (min)": 105, "Saved (min)": 25.5},
+            {"Order #": "448526A",  "Qty": 500,   "Setup (min)": 5,   "Working (min)": 3.5,  "Downtime (min)": 0.5, "Total After (min)": 9,    "Before (min)": 24,  "Saved (min)": 15},
+            {"Order #": "35532",    "Qty": 1000,  "Setup (min)": 5,   "Working (min)": 5,    "Downtime (min)": 1,   "Total After (min)": 11,   "Before (min)": 31,  "Saved (min)": 20},
+            {"Order #": "35532",    "Qty": 2000,  "Setup (min)": 4,   "Working (min)": 9.5,  "Downtime (min)": 2,   "Total After (min)": 15.5, "Before (min)": 49,  "Saved (min)": 33.5},
+            {"Order #": "69BW-200", "Qty": 1000,  "Setup (min)": 6,   "Working (min)": 6.5,  "Downtime (min)": 1,   "Total After (min)": 13.5, "Before (min)": 19,  "Saved (min)": 5.5},
+            {"Order #": "40313",    "Qty": 500,   "Setup (min)": 6.5, "Working (min)": 4,    "Downtime (min)": 0.5, "Total After (min)": 11,   "Before (min)": 31,  "Saved (min)": 20},
+            {"Order #": "1737FSC",  "Qty": 2000,  "Setup (min)": 7,   "Working (min)": 15,   "Downtime (min)": 3,   "Total After (min)": 25,   "Before (min)": 47,  "Saved (min)": 22},
+        ]
+        df_pilot = pd.DataFrame(pilot_orders)
+        total_row = pd.DataFrame([{
+            "Order #":           "TOTAL",
+            "Qty":               df_pilot["Qty"].sum(),
+            "Setup (min)":       df_pilot["Setup (min)"].sum(),
+            "Working (min)":     df_pilot["Working (min)"].sum(),
+            "Downtime (min)":    df_pilot["Downtime (min)"].sum(),
+            "Total After (min)": df_pilot["Total After (min)"].sum(),
+            "Before (min)":      df_pilot["Before (min)"].sum(),
+            "Saved (min)":       df_pilot["Saved (min)"].sum(),
+        }])
+        df_pilot_full = pd.concat([df_pilot, total_row], ignore_index=True)
+        st.dataframe(df_pilot_full, use_container_width=True, hide_index=True)
+        st.caption("Figure 3. Pilot test order list. Column F (Total After) is observed; column G (Before) is Dupli's pre-pilot estimate.")
 
 
 # ═══════════════════════════════════════════════════════════════════
