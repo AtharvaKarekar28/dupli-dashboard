@@ -412,13 +412,12 @@ elif page == PAGES[1]:
     st.caption("Pilot test calculations — based on the pilot order list (16 orders, 50,935 envelopes) and observed pilot timing.")
 
     # ── Headline metrics ────────────────────────────────────────────────
-    m1, m2, m3, m4 = st.columns(4)
-    m1.metric("Throughput",       "2,741 → 8,650 env/hr",  "+216%")
-    m2.metric("Daily Output",     "21,479 → 50,935 env",   "+137%")
-    m3.metric("Cycle Time / 500", "10.9 → 3.5 min",        "−67.9%", delta_color="inverse")
-    m4.metric("Daily Downtime",   "4 → 2 hr/day",          "−50%",   delta_color="inverse")
-
-    st.divider()
+    m1, m2, m3, m4, m5 = st.columns(5)
+    m1.metric("Throughput (operator)",   "2,741 → 8,650 env/hr",  "+216%")
+    m2.metric("Throughput (pilot batch)", "4,548 → 8,650 env/hr",  "+90.2%")
+    m3.metric("Daily Output",            "21,479 → 50,935 env",   "+137%")
+    m4.metric("Cycle Time / 500",        "10.9 → 3.5 min",        "−67.9%", delta_color="inverse")
+    m5.metric("Daily Downtime",          "4 → 2 hr/day",          "−50%",   delta_color="inverse")
 
     # ── Key Metrics Comparison ──────────────────────────────────────────
     st.subheader("Key Metrics — Before vs After Pilot")
